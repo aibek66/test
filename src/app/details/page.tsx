@@ -14,9 +14,7 @@ export default function Details() {
 
 	const fetchMerchants = async () => {
 		try {
-			const res = await fetchData(
-				"https://mocki.io/v1/98548986-6e17-4a80-9d68-9d2f7e04ef99"
-			);
+			const res = await fetchData();
 			const client = res.find((el) => el.merchant.id == id);
 			setObj(client);
 		} catch (err) {
