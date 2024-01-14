@@ -1,95 +1,178 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+"use client";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import fetchData from "@/utils/fetchData";
 
 export default function Home() {
-  return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+	const [data, setData] = useState<{}[]>([]);
+	const [filteredData, setFilteredData] = useState([]);
+	const [arr, setArr] = useState([]);
+	const [name, setName] = useState("");
+	const [success, setSuccess] = useState(false);
+	const [err, setErr] = useState(false);
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+	const changeVal = function (status: string) {
+		if (status == "success") {
+			setSuccess(!success);
+			setErr(false);
+			const newArr = filteredData.filter(
+				(el) => el.payment.status == "status"
+			);
+			setFilteredData(newArr);
+		} else {
+			setErr(!err);
+			setSuccess(false);
+			const newArr = filteredData.filter(
+				(el) => el.payment.status == "error"
+			);
+			setFilteredData(newArr);
+		}
+	};
 
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
+	const router = useRouter();
+	const createQueryString = function (name: string, value: string): string {
+		const params = new URLSearchParams();
+		params.set(name, value);
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
+		return params.toString();
+	};
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
+	useEffect(() => {
+		if (success) {
+			console.log("s");
+			const newArr = filteredData.filter(
+				(el) => el.payment.status == "status"
+			);
+			setFilteredData(newArr);
+			console.log(filteredData);
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+			setArr(filteredData);
+		}
+		if (err) {
+			const newArr = filteredData.filter(
+				(el) => el.payment.status == "error"
+			);
+			setFilteredData(newArr);
+			setArr(filteredData);
+		}
+		setArr(data);
+	}, [success, err]);
+
+	useEffect(() => {
+		const fetchMerchants = async () => {
+			try {
+				const res = await fetchData(
+					"https://mocki.io/v1/98548986-6e17-4a80-9d68-9d2f7e04ef99"
+				);
+				setData(res);
+				setFilteredData(res);
+				setArr(res);
+			} catch (err) {
+				console.log(err);
+			}
+		};
+		fetchMerchants();
+	}, []);
+
+	return (
+		<div className="main-content">
+			<div className="filters">
+				<div className="filters-content">
+					<input
+						className="block w-full px-4 py-3 mb-2 text-sm placeholder-gray-500 bg-white border rounded dark:text-gray-400 dark:placeholder-gray-500"
+						type="text"
+						placeholder="Search merchant name"
+						onChange={(event) => {
+							setName(event.target.value);
+						}}
+					/>
+				</div>
+				<div className="filters-content">
+					<p>Status</p>
+					<div className="item">
+						<input
+							checked={success}
+							type="checkbox"
+							name=""
+							id=""
+							onChange={() => {
+								changeVal("success");
+							}}
+						/>
+						<span>Success</span>
+					</div>
+					<div className="item">
+						<input
+							checked={err}
+							type="checkbox"
+							name=""
+							id=""
+							onChange={() => {
+								changeVal("err");
+							}}
+						/>
+						<span>Error</span>
+					</div>
+				</div>
+			</div>
+			<div className="relative overflow-x-auto">
+				<table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+					<thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+						<tr>
+							<th scope="col" className="px-6 py-3">
+								Merchant Name
+							</th>
+							<th scope="col" className="px-6 py-3">
+								Status
+							</th>
+							<th scope="col" className="px-6 py-3">
+								Amount
+							</th>
+							<th scope="col" className="px-6 py-3">
+								Created Time
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						{arr.map((el, index) => (
+							<tr
+								key={index}
+								className="body-tr bg-white border-b dark:bg-gray-800 dark:border-gray-700"
+								onClick={() => {
+									router.push(
+										"/details" +
+											"?" +
+											createQueryString("id", el.merchant.id)
+									);
+								}}
+							>
+								<th
+									scope="row"
+									className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+								>
+									{el.merchant.name}
+								</th>
+								<td
+									className={`px-6 py-4 ${
+										el.payment.status == "error"
+											? "text-red-500"
+											: "text-lime-400"
+									}`}
+								>
+									{el.payment.status}
+								</td>
+								<td className="dark:text-white px-6 py-4">
+									{el.payment.amount}
+								</td>
+								<td className="dark:text-white px-6 py-4">
+									{el.payment.created_at}
+								</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	);
 }
