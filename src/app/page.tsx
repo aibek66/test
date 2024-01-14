@@ -7,28 +7,8 @@ import fetchData from "@/utils/fetchData";
 export default function Home() {
 	const [data, setData] = useState<{}[]>([]);
 	const [filteredData, setFilteredData] = useState([]);
-	const [arr, setArr] = useState([]);
 	const [name, setName] = useState("");
-	const [success, setSuccess] = useState(false);
-	const [err, setErr] = useState(false);
-
-	const changeVal = function (status: string) {
-		if (status == "success") {
-			setSuccess(!success);
-			setErr(false);
-			const newArr = filteredData.filter(
-				(el) => el.payment.status == "status"
-			);
-			setFilteredData(newArr);
-		} else {
-			setErr(!err);
-			setSuccess(false);
-			const newArr = filteredData.filter(
-				(el) => el.payment.status == "error"
-			);
-			setFilteredData(newArr);
-		}
-	};
+	const [status, setStatus] = useState("");
 
 	const router = useRouter();
 	const createQueryString = function (name: string, value: string): string {
@@ -38,26 +18,34 @@ export default function Home() {
 		return params.toString();
 	};
 
-	useEffect(() => {
-		if (success) {
-			console.log("s");
-			const newArr = filteredData.filter(
-				(el) => el.payment.status == "status"
-			);
-			setFilteredData(newArr);
-			console.log(filteredData);
+	const changeStatus = function (event) {
+		setStatus(event.target.value);
+		if (event.target.value == "all") {
+			setFilteredData(data);
+		} else if (event.target.value == "success") {
+			const newArr = [];
+			for (let index = 0; index < filteredData.length; index++) {
+				const element = filteredData[index];
+				if (element.payment.status == "success") {
+					newArr.push(element);
+				}
+			}
 
-			setArr(filteredData);
-		}
-		if (err) {
-			const newArr = filteredData.filter(
-				(el) => el.payment.status == "error"
-			);
 			setFilteredData(newArr);
-			setArr(filteredData);
+			console.log(filteredData, "filter");
+		} else if (event.target.value == "error") {
+			const newArr = [];
+			for (let index = 0; index < filteredData.length; index++) {
+				const element = filteredData[index];
+				if (element.payment.status == "error") {
+					newArr.push(element);
+				}
+			}
+			setFilteredData(newArr);
+			console.log(filteredData, "err");
 		}
-		setArr(data);
-	}, [success, err]);
+		console.log(event.target.value);
+	};
 
 	useEffect(() => {
 		const fetchMerchants = async () => {
@@ -67,7 +55,6 @@ export default function Home() {
 				);
 				setData(res);
 				setFilteredData(res);
-				setArr(res);
 			} catch (err) {
 				console.log(err);
 			}
@@ -89,31 +76,18 @@ export default function Home() {
 					/>
 				</div>
 				<div className="filters-content">
-					<p>Status</p>
-					<div className="item">
-						<input
-							checked={success}
-							type="checkbox"
-							name=""
-							id=""
-							onChange={() => {
-								changeVal("success");
-							}}
-						/>
-						<span>Success</span>
-					</div>
-					<div className="item">
-						<input
-							checked={err}
-							type="checkbox"
-							name=""
-							id=""
-							onChange={() => {
-								changeVal("err");
-							}}
-						/>
-						<span>Error</span>
-					</div>
+					<select
+						value={status}
+						onChange={changeStatus}
+						id="countries"
+						className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+					>
+						<option selected value="all">
+							Choose a status
+						</option>
+						<option value="success">Success</option>
+						<option value="error">Error</option>
+					</select>
 				</div>
 			</div>
 			<div className="relative overflow-x-auto">
@@ -135,41 +109,42 @@ export default function Home() {
 						</tr>
 					</thead>
 					<tbody>
-						{arr.map((el, index) => (
-							<tr
-								key={index}
-								className="body-tr bg-white border-b dark:bg-gray-800 dark:border-gray-700"
-								onClick={() => {
-									router.push(
-										"/details" +
-											"?" +
-											createQueryString("id", el.merchant.id)
-									);
-								}}
-							>
-								<th
-									scope="row"
-									className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+						{filteredData &&
+							filteredData.map((el, index) => (
+								<tr
+									key={index}
+									className="body-tr bg-white border-b dark:bg-gray-800 dark:border-gray-700"
+									onClick={() => {
+										router.push(
+											"/details" +
+												"?" +
+												createQueryString("id", el.merchant.id)
+										);
+									}}
 								>
-									{el.merchant.name}
-								</th>
-								<td
-									className={`px-6 py-4 ${
-										el.payment.status == "error"
-											? "text-red-500"
-											: "text-lime-400"
-									}`}
-								>
-									{el.payment.status}
-								</td>
-								<td className="dark:text-white px-6 py-4">
-									{el.payment.amount}
-								</td>
-								<td className="dark:text-white px-6 py-4">
-									{el.payment.created_at}
-								</td>
-							</tr>
-						))}
+									<th
+										scope="row"
+										className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+									>
+										{el.merchant.name}
+									</th>
+									<td
+										className={`px-6 py-4 ${
+											el.payment.status == "error"
+												? "text-red-500"
+												: "text-lime-400"
+										}`}
+									>
+										{el.payment.status}
+									</td>
+									<td className="dark:text-white px-6 py-4">
+										{el.payment.amount}
+									</td>
+									<td className="dark:text-white px-6 py-4">
+										{el.payment.created_at}
+									</td>
+								</tr>
+							))}
 					</tbody>
 				</table>
 			</div>
